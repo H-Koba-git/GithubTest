@@ -1,0 +1,126 @@
+name: Python CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+        
+    - name: Run tests
+      run: |
+        python -m unittest test_multiply.py -v
+        
+    - name: Run linting
+      run: |
+        python -m py_compile multiply.py
+        python -m py_compile test_multiply.py
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+        
+    - name: Create build artifacts
+      run: |
+        mkdir -p dist
+        cp multiply.py dist/
+        cp test_multiply.py dist/
+        cp requirements.txt dist/
+        echo "Python掛け算プログラム" > dist/README.txt
+        echo "実行方法: python multiply.py" >> dist/README.txt
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-build
+        path: dist/
+        if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: python-build
+        path: ./dist
+        
+    - name: Create deployment page
+      run: |
+        mkdir -p gh-pages
+        cat > gh-pages/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Python掛け算プログラム</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+                .container { max-width: 800px; margin: 0 auto; text-align: center; }
+                h1 { font-size: 3em; margin-bottom: 20px; }
+                .code { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left; }
+                pre { margin: 0; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🐍 Python掛け算プログラム</h1>
+                <p>✅ CI/CDパイプラインで自動デプロイされました！</p>
+                <div class="code">
+                    <h3>使用方法:</h3>
+                    <pre>python multiply.py</pre>
+                    <h3>テスト実行:</h3>
+                    <pre>python test_multiply.py</pre>
+                </div>
+                <p>デプロイ時刻: $(date)</p>
+            </div>
+        </body>
+        </html>
+        EOF
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./gh-pages 
