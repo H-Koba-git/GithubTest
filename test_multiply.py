@@ -29,9 +29,11 @@ class TestMultiply(unittest.TestCase):
     
     def test_decimal_numbers(self):
         """小数の掛け算テスト"""
-        self.assertEqual(multiply(2.5, 2), 5.0)
-        self.assertEqual(multiply(1.5, 3), 4.5)
-        self.assertEqual(multiply(0.1, 0.1), 0.01)
+        # 浮動小数点数の精度問題を避けるため、assertAlmostEqualを使用
+        self.assertAlmostEqual(multiply(2.5, 2), 5.0, places=10)
+        self.assertAlmostEqual(multiply(1.5, 3), 4.5, places=10)
+        self.assertAlmostEqual(multiply(0.1, 0.1), 0.01, places=10)
+        self.assertAlmostEqual(multiply(0.3, 0.3), 0.09, places=10)
 
 if __name__ == "__main__":
     unittest.main() 

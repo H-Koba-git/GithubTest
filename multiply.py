@@ -7,6 +7,14 @@ def multiply(a, b):
     """2つの数を掛け算する関数"""
     return a * b
 
+def format_number(num):
+    """数値を適切にフォーマットする関数"""
+    # 整数の場合は整数として表示、小数の場合は適切な桁数で表示
+    if num == int(num):
+        return str(int(num))
+    else:
+        return str(num)
+
 def main():
     print("=== 掛け算プログラム ===")
     print()
@@ -19,9 +27,9 @@ def main():
         # 掛け算を実行
         result = multiply(num1, num2)
         
-        # 結果を表示
+        # 結果を表示（フォーマット済み）
         print()
-        print(f"計算結果: {num1} × {num2} = {result}")
+        print(f"計算結果: {format_number(num1)} × {format_number(num2)} = {format_number(result)}")
         
     except ValueError:
         print("エラー: 正しい数値を入力してください。")
